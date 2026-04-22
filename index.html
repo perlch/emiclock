@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eminem Meme Generator</title>
+    <title>Eminem Meme Timer</title>
     <style>
         :root {
             --watch-top: 35%;
@@ -25,7 +25,7 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .meme-container {
@@ -38,7 +38,7 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
 
-        .meme-img { display: block; width: 100%; height: auto; transition: transform 0.3s; }
+        .meme-img { display: block; width: 100%; height: auto; }
 
         .meme-text-overlay {
             position: absolute;
@@ -83,6 +83,13 @@
             gap: 15px; 
             width: 100%; 
             max-width: 400px; 
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        .controls.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
 
         input { 
@@ -129,7 +136,7 @@
         </div>
     </div>
 
-    <div class="controls">
+    <div id="controlsPanel" class="controls">
         <input type="text" id="inputTitle" placeholder="Topic...">
         <input type="text" id="inputTime" placeholder="Time (e.g. 1:30 or 05:00)">
         <button id="startBtn">START COUNTDOWN</button>
@@ -141,6 +148,7 @@
         const displayTitle = document.getElementById('displayTitle');
         const displayTime = document.getElementById('displayTime');
         const startBtn = document.getElementById('startBtn');
+        const controlsPanel = document.getElementById('controlsPanel');
         const memeArea = document.getElementById('memeArea');
 
         let countdown;
@@ -148,6 +156,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const themeParam = urlParams.get('theme');
         const timeParam = urlParams.get('time');
+        const autoStart = urlParams.get('start');
 
         if (themeParam) {
             inputTitle.value = themeParam;
@@ -158,15 +167,7 @@
             displayTime.innerText = timeParam.replace('-', ':');
         }
 
-        inputTitle.addEventListener('input', (e) => {
-            displayTitle.innerText = e.target.value.toUpperCase() || "TOP TEXT HERE";
-        });
-
-        inputTime.addEventListener('input', (e) => {
-            displayTime.innerText = e.target.value || "00:00";
-        });
-
-        startBtn.addEventListener('click', () => {
+        function runTimer() {
             clearInterval(countdown);
             const parts = inputTime.value.trim().split(/[:.-]/); 
             let totalSeconds = 0;
@@ -178,6 +179,8 @@
 
             if (isNaN(totalSeconds) || totalSeconds <= 0) return;
 
+            controlsPanel.classList.add('hidden');
+
             countdown = setInterval(() => {
                 totalSeconds--;
                 const mins = Math.floor(totalSeconds / 60);
@@ -188,7 +191,21 @@
                     triggerExplosion();
                 }
             }, 1000);
+        }
+
+        inputTitle.addEventListener('input', (e) => {
+            displayTitle.innerText = e.target.value.toUpperCase() || "TOP TEXT HERE";
         });
+
+        inputTime.addEventListener('input', (e) => {
+            displayTime.innerText = e.target.value || "00:00";
+        });
+
+        startBtn.addEventListener('click', runTimer);
+
+        if (autoStart === "1" && inputTime.value) {
+            runTimer();
+        }
 
         function triggerExplosion() {
             memeArea.classList.add('explode');
